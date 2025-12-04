@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sorpresa — Carta con flores</title>
+<style>
+  :root{
+    --bg:#0b0b0f;
+    --accent:#7c3aed; /* morado principal */
+    --accent-2:#c084fc;
+    --card:#111218;
+    --paper:#fff8fb;
+    --text:#2b0b2b;
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.08), transparent),
+                radial-gradient(900px 400px at 90% 80%, rgba(192,132,252,0.04), transparent),
+                var(--bg);
+    color: #eee;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    box-sizing:border-box;
+  }
+
+  /* Contenedor principal */
+  .stage{
+    width:100%;
+    max-width:920px;
+    min-height:540px;
+    height:80vh;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+    border-radius:18px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* Botón sorpresa */
+  .surprise-wrap{
+    text-align:center;
+    z-index:30;
+  }
+  .surprise-btn{
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    border: none;
+    color:white;
+    padding:18px 28px;
+    font-size:20px;
+    border-radius:999px;
+    display:inline-flex;
+    gap:12px;
+    align-items:center;
+    cursor:pointer;
+    box-shadow: 0 10px 30px rgba(124,58,237,0.28);
+    transform:translateY(0);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .surprise-btn:active{ transform:translateY(2px) }
+  .gift{
+    font-size:26px;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.45));
+    transform-origin:center;
+    animation: gift-bounce 2.6s infinite;
+  }
+  @keyframes gift-bounce{
+    0%,100%{ transform: translateY(0) rotate(0) }
+    30%{ transform: translateY(-6px) rotate(-8deg) }
+    60%{ transform: translateY(-3px) rotate(6deg) }
+  }
+
+  /* Flores y área emergente */
+  .scene{
+    position:absolute;
+    inset:0;
+    z-index:20;
+    pointer-events:none;
+  }
+  .flowers{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-10%;
+    top:0;
+    overflow:hidden;
+    display:block;
+    z-index:18;
+    pointer-events:none;
+  }
+
+  /* Cada flor (usamos svg escaladas) */
+  .flower{
+    position:absolute;
+    bottom:-10%;
+    width:60px;
+    height:60px;
+    transform-origin:center;
+    opacity:0;
+    pointer-events:none;
+    will-change: transform, opacity;
+  }
+
+  /* animación de subida, aparición y balanceo */
+  .flower.rise{
+    animation: rise 6.5s linear forwards, sway 3.5s ease-in-out infinite;
+  }
+  @keyframes rise{
+    0%{ transform: translateY(40vh) scale(0.6) rotate(0deg); opacity:0 }
+    8%{ opacity:1 }
+    40%{ transform: translateY(4vh) scale(1.0) rotate(10deg); }
+    100%{ transform: translateY(-110vh) scale(1.0) rotate(40deg); opacity:0.02 }
+  }
+  @keyframes sway{
+    0%{ transform: translateX(0) }
+    50%{ transform: translateX(18px) }
+    100%{ transform: translateX(0) }
+  }
+
+  /* Sobre / carta */
+  .card-area{
+    position:relative;
+    z-index:30;
+    pointer-events:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+  }
+
+  .envelope{
+    width:320px;
+    max-width:86%;
+    height:220px;
+    perspective:1200px;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .28s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .envelope:hover{ transform:translateY(-6px) }
+  /* la "envoltura" */
+  .env-body{
+    width:100%;
+    height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+    transition: transform .9s cubic-bezier(.2,.9,.3,1);
+    box-shadow: 0 20px 40px rgba(2,6,23,0.6);
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+    overflow:visible;
+  }
+
+  /* tapa superior del sobre */
+  .flap{
+    position:absolute;
+    left:50%;
+    top:0;
+    transform:translateX(-50%) rotateX(0deg);
+    width:105%;
+    height:62%;
+    background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
+    border-radius:12px 12px 60% 60% / 12px 12px 28% 28%;
+    transform-origin: top center;
+    transition: transform .9s cubic-bezier(.2,.9,.3,1), box-shadow .25s;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding-bottom:36px;
+    box-shadow: 0 10px 30px rgba(124,58,237,0.28);
+  }
+
+  /* cuerpo del sobre (donde va la carta) */
+  .inner{
+    position:absolute;
+    left:6%;
+    bottom:0;
+    width:88%;
+    height:72%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92));
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform:translateZ(1px);
+  }
+
+  /* Carta interior (oculta hasta abrir) */
+  .letter{
+    width:88%;
+    height:84%;
+    background: linear-gradient(180deg, var(--paper), #fff);
+    border-radius:8px;
+    box-shadow: 0 6px 22px rgba(24,6,32,0.16);
+    padding:22px;
+    box-sizing:border-box;
+    transform: translateY(6px);
+    opacity:0;
+    transition: transform .6s cubic-bezier(.2,.9,.3,1), opacity .45s ease;
+    overflow:auto;
+    color:var(--text);
+    font-size:16px;
+    line-height:1.5;
+  }
+
+  /* Estado abierto */
+  .env-open .flap{
+    transform: translateX(-50%) rotateX(180deg);
+    box-shadow: none;
+  }
+  .env-open .letter{
+    opacity:1;
+    transform: translateY(0);
+  }
+
+  /* Texto amoroso dentro de la carta */
+  .message{
+    color:#2d082d;
+    font-weight:600;
+  }
+  .message .heart{
+    display:inline-block;
+    margin-left:8px;
+    color:var(--accent);
+    transform-origin:center;
+    animation: beat 1.1s infinite;
+  }
+  @keyframes beat{
+    0%{ transform: scale(1) }
+    45%{ transform: scale(1.12) }
+    100%{ transform: scale(1) }
+  }
+
+  /* Nota abajo */
+  .hint{
+    position:absolute;
+    bottom:18px;
+    left:18px;
+    right:18px;
+    z-index:60;
+    font-size:13px;
+    color:rgba(255,255,255,0.5);
+    text-align:center;
+    pointer-events:none;
+  }
+
+  /* Responsivo */
+  @media (max-width:520px){
+    .surprise-btn{ font-size:18px; padding:14px 18px; }
+    .envelope{ width:88%; height:200px; }
+    .letter{ font-size:15px; padding:18px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" role="application" aria-label="Sorpresa de carta con flores">
+    <!-- Botón sorpresa -->
+    <div class="surprise-wrap" id="startWrap">
+      <button class="surprise-btn" id="surpriseBtn" aria-haspopup="true" aria-controls="scene">
+        <span class="gift" aria-hidden="true">🎁</span>
+        <span>Sorpresa</span>
+      </button>
+    </div>
+
+    <!-- Escena de flores y carta (inicialmente oculta) -->
+    <div class="scene" id="scene" aria-hidden="true" style="opacity:0; transition: opacity .6s ease;">
+      <div class="flowers" id="flowers" aria-hidden="true"></div>
+
+      <div class="card-area" id="cardArea">
+        <div class="envelope" id="envelope" role="button" tabindex="0" aria-pressed="false" aria-label="Abrir carta">
+          <div class="env-body" id="envBody">
+            <div class="flap" id="flap">
+              <!-- Sticker pequeño en la tapa -->
+              <svg width="64" height="64" viewBox="0 0 24 24" aria-hidden="true">
+                <g fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 8v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"/>
+                  <path d="M3 8L12 13 21 8"/>
+                  <path d="M7 8c0-2.2 1.8-4 4-4 1.2 0 2.3.5 3 1.3C15.7 4.5 16.8 4 18 4c2.2 0 4 1.8 4 4"/>
+                </g>
+              </svg>
+            </div>
+            <div class="inner">
+              <div class="letter" id="letter">
+                <div style="font-size:18px; color:var(--accent); margin-bottom:8px; font-weight:700;">Para mi princesa hermosa ✨</div>
+                <div class="message">
+                  Hola princesa, <br><br>
+                  cada flor que ves aquí lleva un pensamiento mío hacia ti. Cuando cierro los ojos te imagino sonriendo y siento que todo brilla más. Te extraño en cada detalle y te quiero más de lo que las palabras pueden decir. Gracias por ser mi refugio y mi risa. <br><br>
+                  Con cariño, <br>
+                  alguien que te adora. <span class="heart">♥</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="hint">Pulsa la carta para abrirla ❤️</div>
+    </div>
+  </div>
+
+<script>
+/* --- Lógica de interacción y creación de flores --- */
+const surpriseBtn = document.getElementById('surpriseBtn');
+const startWrap = document.getElementById('startWrap');
+const scene = document.getElementById('scene');
+const flowersEl = document.getElementById('flowers');
+const envelope = document.getElementById('envelope');
+const envBody = document.getElementById('envBody');
+const hint = document.getElementById('hint');
+let opened = false;
+let activated = false;
+
+function createFlowerSVG(size=64, color1='#9f7aea', color2='#c4b5fd'){
+  // simple flower SVG (petals + center)
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS,'svg');
+  svg.setAttribute('viewBox','0 0 100 100');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('aria-hidden','true');
+
+  const g = document.createElementNS(svgNS,'g');
+  g.setAttribute('transform','translate(50 50)');
+
+  // petals (8)
+  for(let i=0;i<8;i++){
+    const p = document.createElementNS(svgNS,'ellipse');
+    p.setAttribute('cx','0');
+    p.setAttribute('cy','-26');
+    p.setAttribute('rx','10');
+    p.setAttribute('ry','22');
+    p.setAttribute('transform','rotate(' + (i*45) + ')');
+    p.setAttribute('fill', color1);
+    p.setAttribute('opacity','0.95');
+    g.appendChild(p);
+  }
+  // center circle
+  const c = document.createElementNS(svgNS,'circle');
+  c.setAttribute('cx','0');
+  c.setAttribute('cy','0');
+  c.setAttribute('r','9');
+  c.setAttribute('fill', color2);
+  g.appendChild(c);
+
+  svg.appendChild(g);
+  return svg;
+}
+
+function spawnFlowers(count=14){
+  // Clear previous
+  flowersEl.innerHTML = '';
+  const w = flowersEl.clientWidth || window.innerWidth;
+  for(let i=0;i<count;i++){
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flower';
+    // random size
+    const size = Math.floor(36 + Math.random()*70);
+    wrapper.style.width = size + 'px';
+    wrapper.style.height = size + 'px';
+    // random horizontal position
+    const left = Math.floor(Math.random() * 100);
+    wrapper.style.left = left + '%';
+    // random rotation
+    wrapper.style.transform = 'rotate(' + (Math.random()*80-40) + 'deg)';
+    // staggered delay
+    const delay = (Math.random()*2.5).toFixed(2) + 's';
+    wrapper.style.animationDelay = delay + ', ' + (Math.random()*1.6).toFixed(2) + 's';
+    // create svg
+    const svg = createFlowerSVG(size, '#7c3aed', '#f5e7ff');
+    wrapper.appendChild(svg);
+    flowersEl.appendChild(wrapper);
+    // force reflow then add rise class
+    requestAnimationFrame(()=> wrapper.classList.add('rise'));
+  }
+}
+
+function revealScene(){
+  if(activated) return;
+  activated = true;
+  // hide start button with a small animation
+  startWrap.style.transition = 'transform .6s ease, opacity .5s ease';
+  startWrap.style.transform = 'scale(.86) translateY(-8px)';
+  startWrap.style.opacity = '0';
+  setTimeout(()=> startWrap.style.display = 'none', 550);
+
+  // show scene
+  scene.style.opacity = '1';
+  scene.setAttribute('aria-hidden','false');
+
+  // spawn flowers
+  spawnFlowers(22);
+
+  // small shimmer on envelope after a beat
+  setTimeout(()=> {
+    envelope.animate(
+      [{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-8px) scale(1.02)' }, { transform: 'translateY(0) scale(1)' }],
+      { duration: 900, easing: 'ease-out' }
+    );
+  }, 650);
+}
+
+// abrir carta
+function openEnvelope(){
+  if(opened) return;
+  opened = true;
+  envBody.parentElement.classList.add('env-open');
+  envelope.setAttribute('aria-pressed','true');
+  hint.style.opacity = '0';
+  // después de abrir se puede mostrar unas flores extra (opcional)
+  setTimeout(()=> {
+    // añadir algunas flores rápidas
+    spawnFlowers(12);
+  }, 400);
+}
+
+/* eventos */
+surpriseBtn.addEventListener('click', revealScene);
+envelope.addEventListener('click', openEnvelope);
+envelope.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
+});
+
+/* accesibilidad: permitir generar escena con teclado cuando el botón recibe focus+Enter */
+surpriseBtn.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); revealScene(); }
+});
+
+/* si redimensionan, regenerar algunas flores para que no queden fuera */
+let resizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=> {
+    if(activated && !opened){
+      spawnFlowers(18);
+    }
+  }, 300);
+});
+</script>
+</body>
+</html>
